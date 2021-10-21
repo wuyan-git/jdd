@@ -1,28 +1,33 @@
 /*
-#极速版赚金币
-##入口为极速版 百元生活费 赚金币 邀请好友
-##第一次运行可不填写邀请码 运行一次查看自己的邀请码
-export InviterPin="dS%2Bp85VyjydPuAOOnFP%2Faw%3D%3D" ##你的邀请码
-
-
+#砍价免费拿
+#自定义邀请码环境变量
+export actId="" ##你要参加砍价的商品ID
+export packetId="" ##你要参加砍价的邀请码
+活动地址：https://mfn.jd.com/ 京东极速版
 [task_local]
-#柠檬赚金币
-20 0 * * * jd_zjb.js, tag=柠檬赚金币, img-url=https://raw.githubusercontent.com/Orz-3/mini/master/Color/jd.png, enabled=true
+#砍价免费拿
+ 0 0 * * * jd_kanjia.js, tag=砍价免费拿, img-url=https://raw.githubusercontent.com/Orz-3/mini/master/Color/jd.png, enabled=true
 */
-const $ = new Env('柠檬赚金币');
+
+
+const $ = new Env('砍价免费拿');
 const notify = $.isNode() ? require('./sendNotify') : '';
 //Node.js用户请在jdCookie.js处填写京东ck;
 const jdCookieNode = $.isNode() ? require('./jdCookie.js') : '';
 
 //IOS等用户直接用NobyDa的jd cookie
 let cookiesArr = [], cookie = '', message;
-let InviterPin = ''; //
-
-
-if (process.env.InviterPin) {
-  InviterPin = process.env.InviterPin;
+let actId = ''; //你要参加砍价的商品ID
+let packetId = '';//你要参加砍价的邀请码
+//c50d6379ad3b4782bfc05940e358ace3
+//ac4a4b0b300e4fc6a2fdb88412f51e94-amRfTFBtdnNBVGdyQ0t1
+if (process.env.actId) {
+  actId = process.env.actId;
 }
 
+if (process.env.packetId) {
+  packetId = process.env.packetId;
+}
 if ($.isNode()) {
   Object.keys(jdCookieNode).forEach((item) => {
     cookiesArr.push(jdCookieNode[item])
@@ -57,8 +62,14 @@ const JD_API_HOST = 'https://api.m.jd.com/client.action';
         }
         continue
       }
-       await info()          
-        await help()
+
+      await list()
+     
+     await $.wait(10000)
+     
+     await kanjia()
+     
+
     }
   }
 })()
@@ -69,18 +80,17 @@ const JD_API_HOST = 'https://api.m.jd.com/client.action';
     $.done();
   })
 
-
-function info() {
+function list() {
     return new Promise(async (resolve) => {
 
                 let options = {
     url: `https://api.m.jd.com`,
 
-    body: `functionId=TaskInviteService&body={"method":"inviteTaskHomePage","data":{"channel":"1"}}&appid=market-task-h5&uuid=7303439343432346-7356431353233311&eu=7303439343432341&fv=7356431353233321&_t=1623475839367`,
+    body: `functionId=HomeZeroBuy&body={"pageNum":1,"channel":"speed_app"}&appid=megatron&client=megatron&clientVersion=1.0.0`,
 headers: {
-"Origin": "https://assignment.jd.com",
+"Origin": "https://mfn.jd.com",
 "Host": "api.m.jd.com",
-"User-Agent": "jdltapp;android;3.5.0;10;7303439343432346-7356431353233323;network/wifi;model/PCAM00;addressid/4228801336;aid/7049442d7e415232;oaid/;osVer/29;appBuild/1587;psn/jkWXTyfQA2PDVmg3OkxOiWnHy7pHXWA |155;psq/12;adk/;ads/;pap/JA2020_3112531|3.5.0|ANDROID 10;osv/10;pv/36.36;jdv/;ref/com.jd.jdlite.lib.mission.allowance.AllowanceFragment;partner/oppo;apprpd/Allowance_Registered;eufv/1;Mozilla/5.0 (Linux; Android 10; PCAM00 Build/QKQ1.190918.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/66.0.3359.126 MQQBrowser/6.2 TBS/045140 Mobile Safari/537.36",
+      "User-Agent": "jdltapp;iPhone;3.3.6;14.3;75aeceef3046d8ce11d354ff89af9517a2e4aa18;network/wifi;hasUPPay/0;pushNoticeIsOpen/0;lang/zh_CN;model/iPhone9,2;addressid/;hasOCPay/0;appBuild/1060;supportBestPay/0;pv/56.42;apprpd/;ref/JDLTSubMainPageViewController;psq/38;ads/;psn/75aeceef3046d8ce11d354ff89af9517a2e4aa18|99;jdv/0|kong|t_1001003207_1762319_6901310|jingfen|30578707801140d09fcd54e5cd83bbf7|1621510932517|1621511027;adk/;app_device/IOS;pap/JA2020_3112531|3.3.6|IOS 14.3;Mozilla/5.0 (iPhone; CPU iPhone OS 14_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;supportJDSHWK/1",
       "Cookie": cookie,
       }
                 }
@@ -88,16 +98,96 @@ headers: {
         $.post(options, async (err, resp, data) => {
             try {
 
-                    //data = data.match(/(\{[^()]+\}.+)/)[1]
+                    data = JSON.parse(data);
+                 
+                   
+                   
+                    if(data.code == 0){
+console.log("商品："+data.data[0].goodsName+"\n商品ID："+data.data[0].actId)
+await listyqm(data.data[0].actId)
+console.log("\n商品："+data.data[1].goodsName+"\n商品ID："+data.data[1].actId)
+await listyqm(data.data[1].actId)
+console.log("\n商品："+data.data[2].goodsName+"\n商品ID："+data.data[2].actId)
+await listyqm(data.data[2].actId)
+console.log("\n商品："+data.data[3].goodsName+"\n商品ID："+data.data[3].actId)
+await listyqm(data.data[3].actId)
+console.log("\n商品："+data.data[4].goodsName+"\n商品ID："+data.data[4].actId) 
+await listyqm(data.data[4].actId)
 
-                    //console.log(data)
-                    const reust = JSON.parse(data)
-                    //console.log(reust)
-                    if(reust.code == 0){
-                    $.log("你的邀请码："+reust.data.encryptionInviterPin)
+                }
+            } catch (e) {
+                $.logErr(e, resp);
+            } finally {
+                resolve();
+            }
+        });
+    });
+}
+
+function listyqm(actIda) {
+    return new Promise(async (resolve) => {
+
+                let options = {
+    url: `https://api.m.jd.com`,
+
+    body: `functionId=initiateBargain&body={"actId":"${actIda}","headPortrait":"","nick":"","channel":"speed_app"}&appid=megatron&client=megatron&clientVersion=1.0.0`,
+headers: {
+"Origin": "https://mfn.jd.com",
+"Host": "api.m.jd.com",
+      "User-Agent": "jdltapp;iPhone;3.3.6;14.3;75aeceef3046d8ce11d354ff89af9517a2e4aa18;network/wifi;hasUPPay/0;pushNoticeIsOpen/0;lang/zh_CN;model/iPhone9,2;addressid/;hasOCPay/0;appBuild/1060;supportBestPay/0;pv/56.42;apprpd/;ref/JDLTSubMainPageViewController;psq/38;ads/;psn/75aeceef3046d8ce11d354ff89af9517a2e4aa18|99;jdv/0|kong|t_1001003207_1762319_6901310|jingfen|30578707801140d09fcd54e5cd83bbf7|1621510932517|1621511027;adk/;app_device/IOS;pap/JA2020_3112531|3.3.6|IOS 14.3;Mozilla/5.0 (iPhone; CPU iPhone OS 14_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;supportJDSHWK/1",
+      "Cookie": cookie,
+      }
+                }
+      
+        $.post(options, async (err, resp, data) => {
+            try {
+
+                    data = JSON.parse(data);
+
+                   
+                   
+                    if(data.code == 0){
+                      
+                       console.log('\n当前商品邀请码：'+data.data.packetId+"\n当前初始化砍价："+data.data.amount)
+
+                }
+            } catch (e) {
+                $.logErr(e, resp);
+            } finally {
+                resolve();
+            }
+        });
+    });
+}
+
+function kanjia() {
+    return new Promise(async (resolve) => {
+
+                let options = {
+    url: `https://api.m.jd.com`,
+
+    body: `functionId=helpBargain&body={"actId":"${actId}","packetId":"${packetId}","headPortrait":"","nick":"","attent":true,"channel":"speed_app"}&appid=megatron&client=megatron&clientVersion=1.0.0`,
+headers: {
+"Origin": "https://mfn.jd.com",
+"Host": "api.m.jd.com",
+      "User-Agent": "jdltapp;iPhone;3.3.6;14.3;75aeceef3046d8ce11d354ff89af9517a2e4aa18;network/wifi;hasUPPay/0;pushNoticeIsOpen/0;lang/zh_CN;model/iPhone9,2;addressid/;hasOCPay/0;appBuild/1060;supportBestPay/0;pv/56.42;apprpd/;ref/JDLTSubMainPageViewController;psq/38;ads/;psn/75aeceef3046d8ce11d354ff89af9517a2e4aa18|99;jdv/0|kong|t_1001003207_1762319_6901310|jingfen|30578707801140d09fcd54e5cd83bbf7|1621510932517|1621511027;adk/;app_device/IOS;pap/JA2020_3112531|3.3.6|IOS 14.3;Mozilla/5.0 (iPhone; CPU iPhone OS 14_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;supportJDSHWK/1",
+      "Cookie": cookie,
+      }
+                }
+      
+        $.post(options, async (err, resp, data) => {
+            try {
+
+                    data = JSON.parse(data);
+
+                   
+                   
+                    if(data.code == 0){
+                      
+                       console.log('\n已帮砍：'+data.msg)
+
                 }else
-                
-                    console.log(data.message)
+                console.log('\n已帮砍：'+data.msg)
             } catch (e) {
                 $.logErr(e, resp);
             } finally {
@@ -107,42 +197,10 @@ headers: {
     });
 }
 
-function help() {
-    return new Promise(async (resolve) => {
 
-                let options = {
-    url: `https://api.m.jd.com`,
 
-    body: `functionId=TaskInviteService&body={"method":"participateInviteTask","data":{"channel":"1","encryptionInviterPin":"${InviterPin}","type":1}}&appid=market-task-h5&uuid=7303439343432346-7356431353233311&eu=7303439343432341&fv=7356431353233321&_t=1623475839367`,
-headers: {
-"Origin": "https://assignment.jd.com",
-"Host": "api.m.jd.com",
-"User-Agent": "jdltapp;android;3.5.0;10;7303439343432346-7356431353233323;network/wifi;model/PCAM00;addressid/4228801336;aid/7049442d7e415232;oaid/;osVer/29;appBuild/1587;psn/jkWXTyfQA2PDVmg3OkxOiWnHy7pHXWA |155;psq/12;adk/;ads/;pap/JA2020_3112531|3.5.0|ANDROID 10;osv/10;pv/36.36;jdv/;ref/com.jd.jdlite.lib.mission.allowance.AllowanceFragment;partner/oppo;apprpd/Allowance_Registered;eufv/1;Mozilla/5.0 (Linux; Android 10; PCAM00 Build/QKQ1.190918.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/66.0.3359.126 MQQBrowser/6.2 TBS/045140 Mobile Safari/537.36",
-      "Cookie": cookie,
-      }
-                }
-      
-        $.post(options, async (err, resp, data) => {
-            try {
 
-                    //data = data.match(/(\{[^()]+\}.+)/)[1]
 
-                    //console.log(data)
-                    const reust = JSON.parse(data)
-                    //console.log(reust)
-                    if(reust.code == 0){
-                    $.log(`即将开始邀请：${InviterPin}\n邀请获得金币: `+reust.data.coinReward*0.1+"金币")
-                }else  
-                
-                    console.log(reust.message)
-            } catch (e) {
-                $.logErr(e, resp);
-            } finally {
-                resolve();
-            }
-        });
-    });
-}
 
 
 

@@ -19,6 +19,8 @@ ql repo https://github.com/gys619/jdd.git "jd_|jx_|jddj_|gua_|jddj_|getJDCookie|
 <summary>查看</summary>
 
 
+
+* 加KingRan大佬仓库
 * 最新面板2.9.7拉不到可以进入容器
     ```
     docker exec -it 容器名 bash
@@ -272,9 +274,8 @@ ql repo https://github.com/panghu999/panghu.git "jd_"
 *  [@he1pu](https://github.com/he1pu/JDHelp.git)
 *  [@airacg](https://github.com/airacg/jd_task.git)
 *  [@ccwav](https://github.com/ccwav/QLScript.git)
-*  [@hwkxk](https://github.com/hwkxk/HeytapTask.git)
 *  [@Zy143L](https://github.com/Zy143L/wskey.git)
 *  [@X1a0He](https://github.com/X1a0He/jd_scripts_fixed)
 *  [@AlterGu](https://github.com/AlterGu/qinglong_note)
-*  [@Mashiro2000](https://github.com/Mashiro2000/HeyTap)
+*  [@KingRan](https://github.com/KingRan/JD-Scripts)
 *  [@Aaron-lv](https://github.com/Aaron-lv/sync)

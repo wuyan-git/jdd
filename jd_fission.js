@@ -1,15 +1,15 @@
-/**
-芥么赚豪礼
-cron 37 0,11 * * * jd_genz.js
-入口：芥么微信小程序-赚豪礼
-没微信号测试，故没有抓到注册包，请登录一次小程序后方可执行脚本，只做部分任务.可换话费券和e卡
-更新过新手任务，个别任务必须手动进入一次活动页面
+/*
+cron 47 0,9 * * * jd_fission.js
+东东超市限时抢京豆：
+入口-主页-京东超市-右侧
+
+每个号只有一次助力机会，默认助力CK1,并且无上限，测试好像8个CK就满了.一天30豆左右
 */
-const $ = new Env("芥么赚豪礼");
+const $ = new Env("东东超市抢京豆");
 const jdCookieNode = $.isNode() ? require('./jdCookie.js') : '';
 const notify = $.isNode() ? require('./sendNotify') : '';
 let cookiesArr = [], cookie = ''
-let appid = "yX3KNttlA6GbZjHuDz0-WQ", typeid = "44782287613952";
+let ownCode = null;
 if ($.isNode()) {
     Object.keys(jdCookieNode).forEach((item) => {
         cookiesArr.push(jdCookieNode[item])
@@ -30,8 +30,8 @@ if ($.isNode()) {
         return;
     }
     UUID = getUUID('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx');
+    UA = `jdapp;iPhone;10.1.6;13.5;${UUID};network/wifi;model/iPhone11,6;addressid/4596882376;appBuild/167841;jdSupportDarkMode/0;Mozilla/5.0 (iPhone; CPU iPhone OS 13_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;supportJDSHWK/1`;
     for (let i = 0; i < cookiesArr.length; i++) {
-        UA = `jdapp;iPhone;10.0.8;14.6;${UUID};network/wifi;JDEbook/openapp.jdreader;model/iPhone9,2;addressid/2214222493;appBuild/168841;jdSupportDarkMode/0;Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/16E158;supportJDSHWK/1`;
         if (cookiesArr[i]) {
             cookie = cookiesArr[i];
             $.UserName = decodeURIComponent(cookie.match(/pt_pin=(.+?);/) && cookie.match(/pt_pin=(.+?);/)[1])
@@ -53,76 +53,70 @@ if ($.isNode()) {
 })().catch((e) => { $.log('', `❌ ${$.name}, 失败! 原因: ${e}!`, '') }).finally(() => { $.done(); })
 
 async function main() {
-    $.reg = false;
-    $.tasklist = [];
-    await task('apTaskList', { "linkId": appid, "uniqueId": "" })
-    await $.wait(500);
-    await task('findPostTagList', { "typeId": typeid })
-    if (!$.reg && $.tasklist) {
-        await task('genzTaskCenter')
-        if ($.genzTask) {
-            $.log(`当前芥么豆：${$.totalPoints}`)
-            for (const vo of $.genzTask) {
-                if (!vo.completionStatus) {
-                    $.log(`去完成：${vo.taskName}新手任务！`)
-                    await task('genzDoNoviceTasks', { "taskId": vo.taskId, "completionStatus": 1 })
-                }
-            }
-        }
-        for (const vo of $.tasklist) {
-            if (vo.taskType != "JOIN_INTERACT_ACT" && vo.taskType != "SHARE_INVITE") {
-                $.log(`去完成：${vo.taskShowTitle}`)
-                for (let x = 0; x < vo.taskLimitTimes; x++) {
-                    if (vo.taskDoTimes != vo.taskLimitTimes) {
-                        await $.wait(500);
-                        await task('apDoTask', { "linkId": appid, "taskType": vo.taskType, "taskId": vo.id, "channel": "2", "itemId": vo.taskSourceUrl })
+    $.canHelp = true;
+    $.hotFlag = false;
+    await task('smt_newFission_index')
+    if (!$.hotFlag) {
+        if ($.tasklist) {
+            for (const vo of $.tasklist) {
+                if (vo.assignmentName === "从首页进京东超市") {
+                    $.log(`\n去做${vo.assignmentName}任务`)
+                    if (vo.assignmentTimesLimit != vo.completionCnt) {
+                        await task('smt_newFission_doAssignment', `{"projectId":"${$.projectId}","assignmentId":"${vo.assignmentId}","itemId":"","type":"${vo.type}"}`)
+                    } else {
+                        console.log(`任务：${vo.assignmentName}已完成`)
                     }
                 }
-            }
-            if ($.taglist) {
-                if (vo.taskType === "JOIN_INTERACT_ACT") {
-                    let taglist = $.taglist[random(0, $.taglist.length)]
-                    await task('findTagPosts', { "tagId": taglist.tagId, "tagCategoryId": taglist.typeId, "page": 1, "pageSize": 10 })
-                    if ($.postlist) {
-                        if (vo.taskShowTitle === '喜欢帖子') {
-                            $.log("去完成点赞任务")
-                            for (let x = 0; x < vo.taskLimitTimes; x++) {
-                                if (vo.taskDoTimes != vo.taskLimitTimes) {
-                                    PostId = [];
-                                    likePostId = $.postlist[random(0, $.postlist.length)]
-                                    PostId.push(likePostId.postId)
-                                    PostIdx = PostId[random(0, PostId.length)]
-                                    await task('likePosts', { "likePostId": PostIdx })
-                                    await $.wait(500);
-                                    await task('cancelLikePosts', { "likePostId": PostIdx })
-                                }
+                if (vo.assignmentName === "关注超市优选店铺") {
+                    $.log(`\n去做${vo.assignmentName}任务`)
+                    if (vo.assignmentTimesLimit != vo.completionCnt) {
+                        for (const vi of vo.ext) {
+                            if (vi.status === 1) {
+                                await task('smt_newFission_doAssignment', `{"projectId":"${$.projectId}","assignmentId":"${vo.assignmentId}","itemId":"${vi.itemId}","type":"${vo.type}"}`)
+                                await $.wait(1000);
                             }
                         }
-                        if (vo.taskShowTitle === '关注芥么er') {
-                            $.log("去完成关注任务")
-                            for (let x = 0; x < vo.taskLimitTimes; x++) {
-                                if (vo.taskDoTimes != vo.taskLimitTimes) {
-                                    userId = [];
-                                    likeuserId = $.postlist[random(0, $.postlist.length)]
-                                    userId.push(likeuserId.userId)
-                                    userIdx = userId[random(0, userId.length)]
-                                    await task('followHim', { "forwardUserId": userIdx })
-                                    await $.wait(500);
-                                    await task('cancelFollowHim', { "forwardUserId": userIdx })
-                                }
+                    } else {
+                        console.log(`任务：${vo.assignmentName}已完成`)
+                    }
+                }
+                else if (vo.assignmentName === "逛超市精选会场") {
+                    $.log(`\n去做${vo.assignmentName}任务`)
+                    if (vo.assignmentTimesLimit != vo.completionCnt) {
+                        for (const vi of vo.ext) {
+                            if (vi.status === 1) {
+                                await task('smt_newFission_doAssignment', `{"projectId":"${$.projectId}","assignmentId":"${vo.assignmentId}","itemId":"${vi.advId}","type":"${vo.type}"}`)
+                                await $.wait(1000);
                             }
+                        }
+                    } else {
+                        console.log(`任务：${vo.assignmentName}已完成`)
+                    }
+                }
+                else if (vo.assignmentName === "邀请好友助力") {
+                    if ($.index === 1) {
+                        if (vo.assignmentTimesLimit != vo.completionCnt) {
+                            ownCode = vo.assistId;
+                        }
+                    } else {
+                        $.log(`\n去助力${ownCode}`)
+                        await task('smt_newFission_taskFlag', `{"taskType":"2","operateType":"1","assistId":"${ownCode}"}`)
+                        if ($.canHelp) {
+                            await task('smt_newFission_doAssignment', `{"projectId":"${$.projectId}","assignmentId":"${vo.assignmentId}","itemId":"${ownCode}","type":"${vo.type}"}`)
                         }
                     }
                 }
-            } else {
-                $.log("没有获取到列表，不做此任务")
             }
-            if (vo.taskDoTimes === vo.taskLimitTimes) {
-                $.log(`任务：${vo.taskShowTitle}，已完成`)
+            if ($.userBoxInfoVoList) {
+                $.log("\n去领取阶段奖励")
+                for (const vo of $.userBoxInfoVoList) {
+                    await task('smt_newFission_openBox', `{"boxId":"${vo.id}"}`)
+                }
             }
         }
-    } else { console.log("未注册！请手动进入一次小程序任务\n入口：微信小程序-芥么-赚豪礼") } return;
+    } else { console.log("活动火爆啦！") };
 }
+
 function task(function_id, body) {
     return new Promise(resolve => {
         $.get(taskUrl(function_id, body), async (err, resp, data) => {
@@ -132,77 +126,38 @@ function task(function_id, body) {
                 } else {
                     data = JSON.parse(data);
                     switch (function_id) {
-                        case 'apTaskList':
-                            $.tasklist = data.data
+                        case 'smt_newFission_index':
+                            if (data.result) {
+                                $.projectId = data.result.projectId;
+                                $.tasklist = data.result.taskInfoList;
+                                $.userBoxInfoVoList = data.result.userBoxInfoVoList;
+                            }
+                            if (data.code === '188') {
+                                $.hotFlag = true;
+                            }
                             break;
-                        case 'apDoTask':
-                            if (data.success) {
-                                if (data.code === 0) {
-                                    console.log("任务完成")
-                                }
+                        case 'smt_newFission_doAssignment':
+                            if (data.result.subCode === "0") {
+                                console.log("任务完成！")
                             } else {
                                 console.log(JSON.stringify(data));
                             }
                             break;
-                        case 'findPostTagList':
-                            if (data.code === 0) {
-                                $.taglist = data.data;
-                            } else if (data.code === 4001) {
-                                $.reg = true;
+                        case 'smt_newFission_openBox':
+                            if (data.result.status === 1) {
+                                console.log(`领取成功，获得${data.result.beanCount}豆子`)
                             } else {
                                 console.log(JSON.stringify(data));
                             }
                             break;
-                        case 'findTagPosts':
-                            if (data.code === 0) {
-                                $.postlist = data.data.list;
-                            }
-                            break;
-                        case 'likePosts':
-                            if (data.code === 0) {
-                                console.log(data.data);
-                            } else {
-                                console.log(JSON.stringify(data));
-                            }
-                            break;
-                        case 'cancelLikePosts':
-                            if (data.code === 0) {
-                                console.log(data.data);
-                            } else {
-                                console.log(JSON.stringify(data));
-                            }
-                            break;
-                        case 'followHim':
-                            if (data.code === 0) {
-                                console.log("关注成功");
-                            } else {
-                                console.log(JSON.stringify(data));
-                            }
-                            break;
-                        case 'cancelFollowHim':
-                            if (data.code === 0) {
-                                console.log("取消关注");
-                            } else {
-                                console.log(JSON.stringify(data));
-                            }
-                            break;
-                        case 'genzTaskCenter':
-                            $.genzTask = data.data.noviceTaskStatusList;
-                            $.totalPoints = data.data.totalPoints;
-                            break;
-                        case 'genzDoNoviceTasks':
-                            if (data.success) {
-                                if (data.data) {
-                                    console.log("任务完成");
-                                } else {
-                                    console.log(JSON.stringify(data));
-                                }
-                            } else {
-                                console.log(JSON.stringify(data));
+                        case 'smt_newFission_taskFlag':
+                            if (data.result.assistFlag === '2') {
+                                $.canHelp = false
+                                console.log(`助力失败,每天只能助力一次`)
                             }
                             break;
                         default:
-                            $.log(JSON.stringify(data))
+                            console.log(JSON.stringify(data));
                             break;
                     }
                 }
@@ -214,24 +169,23 @@ function task(function_id, body) {
         })
     })
 }
-
 function taskUrl(function_id, body) {
     return {
-        url: `https://api.m.jd.com/?functionId=${function_id}&body=${escape(JSON.stringify(body))}&_t=${new Date().getTime()}&appid=gen-z`,
+        url: `https://api.m.jd.com/client.action?functionId=${function_id}&body=${body}&clientVersion=10.0.1&appid=smtTimeLimitFission`,
         headers: {
             "Host": "api.m.jd.com",
+            "Accept": "*/*",
             "Connection": "keep-alive",
-            "content-type": "application/json",
-            "Accept-Encoding": "gzip,compress,br,deflate",
             "User-Agent": UA,
+            "Accept-Language": "zh-cn",
+            "Referer": "https://h5.m.jd.com/babelDiy/Zeus/3fCUZv7USx24U1zzhLdFV4oDQ37b/index.html",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Content-Type": "text/plain",
             "Cookie": cookie,
-            "Referer": "https://servicewechat.com/wx9a412175d4e99f91/42/page-frame.html",
-        },
+        }
     }
 }
-function random(min, max) {
-    return Math.floor(Math.random() * (max - min)) + min;
-}
+
 // prettier-ignore
 function getUUID(x = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", t = 0) { return x.replace(/[xy]/g, function (x) { var r = 16 * Math.random() | 0, n = "x" == x ? r : 3 & r | 8; return uuid = t ? n.toString(36).toUpperCase() : n.toString(36), uuid }) }
 function TotalBean() { return new Promise(async e => { const n = { url: "https://wq.jd.com/user_new/info/GetJDUserInfoUnion?sceneval=2", headers: { Host: "wq.jd.com", Accept: "*/*", Connection: "keep-alive", Cookie: cookie, "User-Agent": UA, "Accept-Language": "zh-cn", Referer: "https://home.m.jd.com/myJd/newhome.action?sceneval=2&ufc=&", "Accept-Encoding": "gzip, deflate, br" } }; $.get(n, (n, o, a) => { try { if (n) $.logErr(n); else if (a) { if (1001 === (a = JSON.parse(a))["retcode"]) return void ($.isLogin = !1); 0 === a["retcode"] && a.data && a.data.hasOwnProperty("userInfo") && ($.nickName = a.data.userInfo.baseInfo.nickname), 0 === a["retcode"] && a.data && a.data["assetInfo"] && ($.beanCount = a.data && a.data["assetInfo"]["beanNum"]) } else console.log("京东服务器返回空数据") } catch (e) { $.logErr(e) } finally { e() } }) }) }
